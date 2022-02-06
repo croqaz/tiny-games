@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+<style>
+body {
+  font-size: 24px;
+  font-family: 'Source Code Pro', monospace;
+}
+#content {
+  width: 60rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+table {
+  border-spacing: 0px;
+  border: 1px solid gray;
+}
+table td {
+  margin: 0;
+  border-right: 1px solid gray;
+  border-bottom: 1px solid gray;
+}
+#score {
+  padding: 0.5rem;
+  border: 1px solid gray;
+}
+</style></head>
+<body>
+<div id="content">
+  <table id="table"></table>
+  <p>Score: <span id="score">0</span></p>
+</div>
+<script src="js/jquery.min.js" crossorigin="anonymous"></script>
+<script src="js/jquery.color.plus-names.min.js" crossorigin="anonymous"></script>
+<script>
+  const selColor = 'green';
+  const foodColor = 'blue';
+  const snake = [[1, 2], [1, 1]];
+  const food = [];
+  let score = 0;
+  function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
+  function drawFood() {
+    for (let f of food) {
+      if (f[0] && f[1]) {
+        $(`#table td:contains(${f[0]},${f[1]})`).css({ backgroundColor: foodColor });
+      }
+    }
+  }
+  function eatFood(newHead) {
+    for (let f of food) {
+      if (newHead[0] == f[0] && newHead[1] == f[1]) {
+        f[0] = 1 + getRandomInt(9);
+        f[1] = 1 + getRandomInt(9);
+        score += 1;
+        return true;
+      }
+    }
+  }
+  function moveSnake(direction) {
+    const curr = snake[0];
+    const newHead = [curr[0], curr[1]];
+    if (direction === 'up') {
+      newHead[0] -= 1;
+    } else if (direction === 'down') {
+      newHead[0] += 1;
+    } else if (direction === 'right') {
+      newHead[1] += 1;
+    } else if (direction === 'left') {
+      newHead[1] -= 1;
+    } else {
+      // unknown direction
+      return;
+    }
+    // check map boundaries
+    if (newHead[0] < 1) return;
+    if (newHead[0] > 9) return;
+    if (newHead[1] < 1) return;
+    if (newHead[1] > 9) return;
+    // push a new head
+    snake.unshift(newHead);
+    // check & eat food
+    if (!eatFood(newHead)) {
+      snake.pop();
+    }
+  }
+  function drawSnake() {
+    let head = true;
+    for (let p of snake) {
+      if (head) {
+        $(`#table td:contains(${p[0]},${p[1]})`).css({ background: '#3f3' });
+        head = false;
+      } else {
+        $(`#table td:contains(${p[0]},${p[1]})`).css({ background: selColor });
+      }
+    }
+  }
+
+$(function() {
+  const t = $('#table');
+  // draw the game table
+  for (let row=1; row<10; row++) {
+    const tr = document.createElement('tr');
+    for (let col=1; col<10; col++) {
+      const td = document.createElement('td');
+      td.innerText = `${row},${col}`;
+      tr.appendChild(td);
+    }
+    t.append(tr);
+  }
+
+  // create food
+  for (let i=1; i<=5; i++) {
+    food.push([2 + getRandomInt(9), 2 + getRandomInt(9)]);
+  }
+  // draw food
+  drawFood();
+  // draw snake
+  drawSnake();
+
+  document.body.onkeydown = function(ev) {
+    // console.log(ev);
+    if (ev.key === 'w') {
+      moveSnake('up');
+    } else if (ev.key === 's') {
+      moveSnake('down');
+    } else if (ev.key === 'd') {
+      moveSnake('right');
+    } else if (ev.key === 'a') {
+      moveSnake('left');
+    } else {
+      return;
+    }
+    // reset position
+    $('#table td').css({ background: 'none' });
+    // draw food
+    drawFood();
+    // draw snake
+    drawSnake();
+    // draw score
+    $('#score').text(score);
+  };
+
+})
+</script>
+</body>
+</html>
