@@ -1,62 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+<title>Snake</title>
 <style>
 body {
-  font-size: 24px;
+  font-size: 22px;
   font-family: 'Source Code Pro', monospace;
 }
 #content {
-  width: 60rem;
+  width: 40rem;
   margin-left: auto;
   margin-right: auto;
 }
 table {
   border-spacing: 0px;
-  border: 1px solid gray;
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
 }
 table td {
   margin: 0;
-  border-right: 1px solid gray;
-  border-bottom: 1px solid gray;
+  width: 1.2rem;
+  height: 1.2rem;
+  background-color: #fff;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
 }
-#score {
-  padding: 0.5rem;
-  border: 1px solid gray;
+#score, #moves {
+  padding: 0.3rem;
+  border: 1px solid #ccc;
+}
+.snakeBody {
+  background-color: DarkGreen;
+  border-radius: 0;
+}
+.snakeHead {
+  background-color: DarkOliveGreen;
+  border-radius: 8px;
+}
+.food {
+  background-color: Cyan;
+  transition: background 2s;
+  border-radius: 8px;
+}
+#error {
+  color: red;
+  display: none;
 }
 </style></head>
 <body>
 <div id="content">
   <table id="table"></table>
-  <p>Score: <span id="score">0</span></p>
+  <p>Score: <span id="score">0</span>. Moves: <span id="moves">0</span>.</p>
+  <p id="error">You have eaten yourself.<br>Game over.
+  <button type="button" onClick="location.reload(false)">Refresh</button>
+  </p>
 </div>
-<script src="js/jquery.min.js" crossorigin="anonymous"></script>
-<script src="js/jquery.color.plus-names.min.js" crossorigin="anonymous"></script>
-<script>
-  const selColor = 'green';
-  const foodColor = 'blue';
+<script type="text/javascript" async="async">
+  const ROWS = 14;
+  const COLS = 16;
   const snake = [[1, 2], [1, 1]];
   const food = [];
+  let moves = 0;
   let score = 0;
+  let lost = false;
   function getRandomInt(max) {
     return Math.floor(Math.random() * max);
+  }
+  function createFood() {
+    let i = ROWS * COLS;
+    while (i > 0) {
+      let r = 1 + getRandomInt(ROWS);
+      let c = 1 + getRandomInt(COLS);
+      let posOk = true;
+      for (let p of snake) {
+        if (r == p[0] && c == p[1]) posOk = false;
+      }
+      if (posOk) return [r, c];
+      i -= 1;
+    }
   }
   function drawFood() {
     for (let f of food) {
       if (f[0] && f[1]) {
-        $(`#table td:contains(${f[0]},${f[1]})`).css({ backgroundColor: foodColor });
+        document.getElementById(`x${f[0]}-${f[1]}`).classList.add('food');
       }
     }
   }
   function eatFood(newHead) {
     for (let f of food) {
       if (newHead[0] == f[0] && newHead[1] == f[1]) {
-        f[0] = 1 + getRandomInt(9);
-        f[1] = 1 + getRandomInt(9);
+        document.getElementById(`x${f[0]}-${f[1]}`).classList.remove('food');
         score += 1;
+        const [r, c] = createFood();
+        f[0] = r; f[1] = c;
         return true;
       }
     }
@@ -78,9 +119,18 @@ table td {
     }
     // check map boundaries
     if (newHead[0] < 1) return;
-    if (newHead[0] > 9) return;
+    if (newHead[0] > ROWS) return;
     if (newHead[1] < 1) return;
-    if (newHead[1] > 9) return;
+    if (newHead[1] > COLS) return;
+    // check eaten yourself
+    for (let p of snake) {
+      if (newHead[0] == p[0] && newHead[1] == p[1]) {
+        document.getElementById('error').style.display = 'block';
+        lost = true;
+        return;
+      }
+    }
+    moves += 1;
     // push a new head
     snake.unshift(newHead);
     // check & eat food
@@ -92,37 +142,40 @@ table td {
     let head = true;
     for (let p of snake) {
       if (head) {
-        $(`#table td:contains(${p[0]},${p[1]})`).css({ background: '#3f3' });
+        head = document.getElementById(`x${p[0]}-${p[1]}`);
+        head.classList.remove(['food', 'snakeBody']);
+        head.classList.add('snakeHead');
         head = false;
       } else {
-        $(`#table td:contains(${p[0]},${p[1]})`).css({ background: selColor });
+        const body = document.getElementById(`x${p[0]}-${p[1]}`);
+        body.classList.remove('snakeHead');
+        body.classList.add('snakeBody');
       }
     }
   }
 
-$(function() {
-  const t = $('#table');
+window.addEventListener('load', function() {
+  const t = document.getElementById('table');
   // draw the game table
-  for (let row=1; row<10; row++) {
+  for (let row=1; row<=ROWS; row++) {
     const tr = document.createElement('tr');
-    for (let col=1; col<10; col++) {
+    for (let col=1; col<=COLS; col++) {
       const td = document.createElement('td');
-      td.innerText = `${row},${col}`;
+      td.id = `x${row}-${col}`;
       tr.appendChild(td);
     }
-    t.append(tr);
+    t.appendChild(tr);
   }
 
-  // create food
-  for (let i=1; i<=5; i++) {
-    food.push([2 + getRandomInt(9), 2 + getRandomInt(9)]);
+  // create X food
+  for (let i=1; i<=4; i++) {
+    food.push(createFood());
   }
-  // draw food
   drawFood();
-  // draw snake
   drawSnake();
 
   document.body.onkeydown = function(ev) {
+    if (lost) return;
     // console.log(ev);
     if (ev.key === 'w') {
       moveSnake('up');
@@ -135,14 +188,17 @@ $(function() {
     } else {
       return;
     }
-    // reset position
-    $('#table td').css({ background: 'none' });
+    // reset colors
+    for (const e of document.querySelectorAll('#table td')) {
+      e.classList.remove('food', 'snakeBody');
+    }
     // draw food
     drawFood();
     // draw snake
     drawSnake();
-    // draw score
-    $('#score').text(score);
+    // draw score and moves
+    document.getElementById('score').innerText = score;
+    document.getElementById('moves').innerText = moves;
   };
 
 })
