@@ -8,7 +8,7 @@ window.addEventListener('load', function() {
 
     const CX = c.width / 2 - 1;
     const CY = c.height / 2 - 1;
-    const OUTER = c.width / 2 - 20;
+    const OUTER = c.width / 2 - 25;
     const LONG = OUTER - 20;
 
     function toRadians(angle) {
@@ -16,6 +16,19 @@ window.addEventListener('load', function() {
     }
     function round(num) {
         return ((num * 10) << 0) * 0.1;
+    }
+
+    function drawMonths(dt) {
+        ctx.lineWidth = 9;
+        const len = 10;
+        const mo = dt.getMonth() + 1;
+        const day = dt.getDate() - 1;
+        const moAngle = Math.PI - toRadians(mo * 30 + day);
+        // draw month hand
+        ctx.beginPath();
+        ctx.moveTo(CX + Math.sin(moAngle) * OUTER, CY + Math.cos(moAngle) * OUTER);
+        ctx.lineTo(CX + Math.sin(moAngle) * (OUTER+len), CY + Math.cos(moAngle) * (OUTER+len));
+        ctx.stroke();
     }
     function drawHours(dt) {
         ctx.lineWidth = 9;
@@ -71,6 +84,11 @@ window.addEventListener('load', function() {
         ctx.stroke();
         ctx.fill();
 
+        // months circle
+        ctx.beginPath();
+        ctx.arc(CX, CY, OUTER+10, 0, 2 * Math.PI);
+        ctx.stroke();
+
         ctx.fillStyle = '#111';
         // 12 thick outer markers
         for (let i = 0; i < 12; i++) {
@@ -108,6 +126,7 @@ window.addEventListener('load', function() {
         // set date for debug: new Date(2022,1,2,12,12,15);
         const dt = window.DT ? window.DT : new Date();
         // draw hands in the right order
+        drawMonths(dt);
         drawHours(dt);
         drawMinutes(dt);
         drawSeconds(dt);
