@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@500&display=swap" rel="stylesheet">
+<title>Match the objects</title>
+<style>
+body {
+  font-size: 22px;
+  font-family: 'Source Code Pro', monospace;
+}
+#content {
+  width: 30rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+table {
+  border-spacing: 0px;
+  border-left: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  margin-left: auto;
+  margin-right: auto;
+}
+table td {
+  margin: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  background-color: #fff;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+.selected {
+  background-color: gray;
+  transition: background 1s;
+}
+#error {
+  color: red;
+  font-size: 18px;
+}
+</style></head>
+<body>
+<div id="content">
+  <table id="table"></table>
+  <br>
+  <table id="work">
+    <tr><td id="w1"> &nbsp;</td><td id="w2"> &nbsp;</td><td id="w3"> &nbsp;</td></tr>
+  </table>
+  <p id="error"></p>
+</div>
+<script type="text/javascript" async="async">
+  const ROWS = 14;
+  const COLS = 16;
+  const OBJECTS = ['🍇', '🍈', '🍉', '🍊', '🍋', '🍌'];
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+function setError(msg) {
+    document.getElementById('error').innerText = msg;
+}
+function getFree() {
+    for (let e of document.querySelectorAll('#work td')) {
+        if (e.innerText.trim() === '') return e;
+    }
+}
+function getWork() {
+    const work = [];
+    for (const e of document.querySelectorAll('#work td')) {
+        if (e.innerText.trim() !== '') {
+            work.push(e.innerText);
+        }
+    }
+    return work;
+}
+function emptyWork() {
+    for (const e of document.querySelectorAll('#work td')) {
+        e.innerText = '  ';
+    }
+}
+function emptySelected() {
+    for (const e of document.querySelectorAll('#table td.selected')) {
+        e.innerText = '  ';
+        e.classList.remove('selected');
+    }
+}
+
+window.addEventListener('load', function () {
+    const t = document.getElementById('table');
+    // draw the game table
+    for (let row = 1; row <= ROWS; row++) {
+        const tr = document.createElement('tr');
+        for (let col = 1; col <= COLS; col++) {
+            const td = document.createElement('td');
+            td.id = `x${row}-${col}`;
+            td.innerText = OBJECTS[getRandomInt(OBJECTS.length)];
+            tr.appendChild(td);
+        }
+        t.appendChild(tr);
+    }
+
+    t.onclick = function(ev) {
+        const free = getFree();
+        if (!free) return;
+        const tgt = ev.target;
+        if (!tgt.innerText) return;
+        if (tgt.classList.contains('selected')) return;
+        free.innerText = tgt.innerText;
+        tgt.classList.add('selected');
+
+        const work = getWork();
+        if (work.reduce((a, b) => a === b ? a : false)) {
+            setError(' ');
+            if (work.length === 3) {
+                emptyWork();
+                emptySelected();
+            }
+        } else {
+            setError('Try again');
+        }
+    };
+});
+
+</script>
+</body>
+</html>
