@@ -28,7 +28,6 @@ table td {
   margin: 0;
   width: 1.2rem;
   height: 1.2rem;
-  cursor: pointer;
   background-color: #fff;
   border-right: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
@@ -44,13 +43,14 @@ table td {
 </style></head>
 <body>
 <div id="content">
-  <table id="table" draggable="false"></table>
+  <table id="table"></table>
   <br>
-  <table id="work" draggable="false">
+  <table id="work">
     <tr><td id="w1"> &nbsp;</td><td id="w2"> &nbsp;</td><td id="w3"> &nbsp;</td></tr>
   </table>
   <p id="error"></p>
 </div>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 <script type="text/javascript" async="async">
   const ROWS = 14;
   const COLS = 16;
@@ -89,46 +89,46 @@ function emptySelected() {
 }
 
 window.addEventListener('load', function () {
-    const totNr = Math.floor((ROWS * COLS) / 3);
-
-    const t = document.getElementById('table');
-    // draw the game table
+    const t = [];
     for (let row = 1; row <= ROWS; row++) {
-        const tr = document.createElement('tr');
+        const row = [];
         for (let col = 1; col <= COLS; col++) {
-            const td = document.createElement('td');
-            td.id = `x${row}-${col}`;
-            td.innerText = OBJECTS[getRandomInt(OBJECTS.length)];
-            tr.appendChild(td);
+            row.push(OBJECTS[getRandomInt(OBJECTS.length)]);
         }
-        t.appendChild(tr);
+        t.push(row);
     }
 
-    for (const td of t.querySelectorAll('td')) {
-        td.onclick = function (ev) {
-            const free = getFree();
-            if (!free) return;
-            const tgt = ev.target;
-            if (!tgt.innerText) return;
-            if (tgt.classList.contains('selected')) {
-                tgt.classList.remove('selected');
-                return;
-            }
-            free.innerText = tgt.innerText;
-            tgt.classList.add('selected');
+    d3.select('#table')
+        .selectAll('tr')
+        .data(t)
+        .join('tr')
+        .attr('data-row', (d, row) => row)
+        .selectAll('td')
+        .data((d, row) => d)
+        .join('td')
+        .attr('data-col', (d, col) => col)
+        .text((d) => d);
 
-            const work = getWork();
-            if (work.reduce((a, b) => (a === b ? a : false))) {
-                setError(' ');
-                if (work.length === 3) {
-                    emptyWork();
-                    emptySelected();
-                }
-            } else {
-                setError('Try again');
+    d3.select('#table').on('click', function (ev) {
+        const free = getFree();
+        if (!free) return;
+        const tgt = ev.target;
+        if (!tgt.innerText) return;
+        if (tgt.classList.contains('selected')) return;
+        tgt.classList.add('selected');
+        free.innerText = tgt.innerText;
+
+        const work = getWork();
+        if (work.reduce((a, b) => (a === b ? a : false))) {
+            setError(' ');
+            if (work.length === 3) {
+                emptyWork();
+                emptySelected();
             }
-        };
-    }
+        } else {
+            setError('Try again');
+        }
+    });
 });
 
 </script>
